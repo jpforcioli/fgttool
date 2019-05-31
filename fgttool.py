@@ -9,6 +9,7 @@ from pprint import pprint
 import logging
 logging.captureWarnings(True)
 
+__version__ = "0.3.1"
 
 class FGT(object):
     """
@@ -40,12 +41,12 @@ class FGT(object):
                 verify=False)
         except requests.exceptions.RequestException as e:
             print(e)
-            print "LOGIN failed"
+            print("LOGIN failed")
             exit()
 
         if res.text.find("error") != -1:
             # found some error in the response, consider login failed
-            print "LOGIN failed"
+            print("LOGIN failed")
             return False
 
         # update session's csrftoken
@@ -120,14 +121,14 @@ class FGT(object):
 def process_commands():
     # inititate command parsers
     tool = argparse.ArgumentParser(description="Python tool to interact with FGT via rest api")
-    commands = tool.add_subparsers(title="commands")
+    commands = tool.add_subparsers(title="commands", dest='COMMANDS')
 
     # common arguments
     tool.add_argument("-v", "--verbose", help="increase output verbosity",
                       action="store_true")
     tool.add_argument("-d", "--dryrun", help="dryrun the command without committing any changes",
                       action="store_true")
-    tool.add_argument('--version', help="show version number and exit", action='version', version='%(prog)s 0.3')
+    tool.add_argument('--version', help="show version number and exit", action='version', version=f'%(prog)s {__version__}')
 
     # get command (get firewall.address.test --vdom root)
     command_get = commands.add_parser("get", help="get object or table")
@@ -167,44 +168,58 @@ def process_commands():
 
     # process commands
     args = tool.parse_args()
-    args.func(args)
+    if hasattr(args, 'func'):
+        args.func(args)
 
 # function to retrieve resource
 def get_command(args):
     # parse URI path
-    path, name, mkey, member = parse_resource(args.resource)
-    print "get", path, name, mkey, "in vdom", args.vdom
+    path, name, mkey, member, child = parse_resource(args.resource)
+    if mkey:
+        print("get", path, name, mkey, "in vdom", args.vdom)
+    else:
+        print("get", path, name, "in vdom", args.vdom)        
 
     # only send request if not dryrun
     if not args.dryrun:
         # retrieve resource
-        res = fgt.get(
-            url="/api/v2/cmdb/" + path + "/" + name + "/" + mkey,
+        url_string = f'/api/v2/cmdb/{path}/{name}'
+        if mkey:
+            url_string = f'{url_string}/{mkey}'
+        res = fgt.get( 
+            url=url_string,
             params={"vdom": args.vdom})
         check_response(res, True)  # always print JSON response for get
 
 # function to delete resource
 def delete_command(args):
     # parse URI path
-    path, name, mkey, member = parse_resource(args.resource)
-    print "delete", path, name, mkey, "in vdom", args.vdom
+    path, name, mkey, member, child = parse_resource(args.resource)
+    if mkey:
+        if child:
+            print("delete", path, name, mkey, member, child, "in vdom", args.vdom)
+        else:
+            print("delete", path, name, mkey, "in vdom", args.vdom)
 
     # only send request if not dryrun
     if not args.dryrun:
         # delete resource
+        url_string = f'/api/v2/cmdb/{path}/{name}/{mkey}'
+        if child:
+            url_string = f'{url_string}/member/{child}'
         res = fgt.delete(
-            url="/api/v2/cmdb/" + path + "/" + name + "/" + mkey,
+            url=url_string,
             params={"vdom": args.vdom})
         check_response(res, args.verbose)
 
 # function to create resource
 def create_command(args):
     # parse URI path
-    path, name, mkey, member = parse_resource(args.resource)
+    path, name, mkey, member, child = parse_resource(args.resource)
     if not member:
-        print "create", path, name, mkey, "in vdom", args.vdom
+        print("create", path, name, mkey, "in vdom", args.vdom)
     else:
-        print "add member", path, name, mkey, "in vdom", args.vdom    
+        print("add member", path, name, mkey, "in vdom", args.vdom)
 
     # add mkey to resource data
     # TODO: mkey should be retrieve from schema
@@ -231,8 +246,8 @@ def create_command(args):
 # function to edit resource
 def edit_command(args):
     # parse URI path
-    path, name, mkey, member = parse_resource(args.resource)
-    print "edit", path, name, mkey, "in vdom", args.vdom
+    path, name, mkey, member, child = parse_resource(args.resource)
+    print("edit", path, name, mkey, "in vdom", args.vdom)
 
     # only send request if not dryrun
     if not args.dryrun:
@@ -246,8 +261,8 @@ def edit_command(args):
 # function to copy resource (recursive)
 def copy_command(args):
     # parse URI path
-    path, name, mkey, member = parse_resource(args.resource)
-    print "copy", path, name, mkey, "from", args.oldvdom, "to", args.newvdom
+    path, name, mkey, member, child = parse_resource(args.resource)
+    print("copy", path, name, mkey, "from", args.oldvdom, "to", args.newvdom)
 
     # retrieve resource in old vdom
     res = fgt.get(
@@ -260,7 +275,7 @@ def copy_command(args):
 
     # skip if cannot get json result
     if not rjson or "results" not in rjson:
-        print "fail to retrieve resource", args.resource, "in vdom", args.oldvdom
+        print("fail to retrieve resource", args.resource, "in vdom", args.oldvdom)
         return
 
     # retrieve resource in new vdom
@@ -274,7 +289,7 @@ def copy_command(args):
 
     # skip if resource already exists in new vdom
     if new["http_status"] != 404 and mkey is not "":
-        print args.resource, "already existed in vdom", args.newvdom
+        print(args.resource, "already existed in vdom", args.newvdom)
         return
 
     # copy all objects in table
@@ -310,32 +325,38 @@ def copy_command(args):
 # function to parse resource path, name and mkey
 def parse_resource(resource):
     obj_list = resource.split('/')
+    mkey = None
+    member = None
+    child = None
     if len(obj_list) == 2:
         path = obj_list[0]
         name = obj_list[1]
-        mkey = ""
-        member = None
     elif len(obj_list) == 3:
         path = obj_list[0]
         name = obj_list[1]
         mkey = obj_list[2]
-        member = None
     elif len(obj_list) == 4:
         path = obj_list[0]
         name = obj_list[1]
         mkey = obj_list[2]
-        member = obj_list[3]                
+        member = obj_list[3]
+    elif len(obj_list) == 5:
+        path = obj_list[0]
+        name = obj_list[1]
+        mkey = obj_list[2]
+        member = obj_list[3]
+        child = obj_list[4]
     else:
-        print "Invalid resource", resource, "please use / to separate path/name/mkey"
+        print("Invalid resource", resource, "please use / to separate path/name/mkey")
         exit()
-    return (path, name, mkey, member)
+    return (path, name, mkey, member, child)
 
 # function to retrieve json data from HTTP response (return False if fails)
 def get_json(response):
     try:
         rjson = response.json()
     except UnicodeDecodeError as e:
-        print "Cannot decode json data in HTTP response"
+        print("Cannot decode json data in HTTP response")
         return False
     except:
         e = sys.exc_info()[0]
@@ -349,33 +370,32 @@ def check_response(res, verbose):
     rjson = get_json(res)
     if verbose: pprint(rjson)
     if not rjson:
-        print "fail to retrieve JSON response"
+        print("fail to retrieve JSON response")
     else:
         status = rjson["http_status"]
         if status == 200:
-            if verbose: print "200 successful request"
+            if verbose: print("200 successful request")
         elif status == 400:
-            print "400 Invalid request format"
+            print("400 Invalid request format")
         elif status == 403:
-            print "403 Permission denied"
+            print("403 Permission denied")
         elif status == 404:
-            print "404 None existing resource"
+            print("404 None existing resource")
         elif status == 405:
-            print "405 Unsupported method"
+            print("405 Unsupported method")
         elif status == 424:
-            print "424 Dependency error"
+            print("424 Dependency error")
         elif status == 500:
-            print "500 Internal server error"
+            print("500 Internal server error")
         else:
-            print status, "Unknown error"
-
+            print(status, "Unknown error")
 
 ###############################################################################
 if __name__ == "__main__":
     # initilize fgt connection
     fgt_ip = "10.210.35.101"
     fgt_login = "admin"
-    fgt_password = ""
+    fgt_password = "fortinet"
 
     fgt = FGT(fgt_ip)
     fgt.login(fgt_login, fgt_password)
