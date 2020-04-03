@@ -76,15 +76,16 @@ What's New
     to enter the FortiGate IP address, the administrator's credentials
     respectively
 
-    .. note::
+    **Notes**
 
-       You can still open the ``fgttool.py`` file and edit the
-       variables ``fgt_ip``, ``fgt_login``, ``fgt_password``.
+       - You can still open the ``fgttool.py`` file and edit the
+	 variables ``fgt_ip``, ``fgt_login``, ``fgt_password``. 
 
-       If you want to be prompted to enter a password, set variable
-       ``fgt_password`` to ``None``.
+       - If you want to be prompted to enter a password, set variable
+	 ``fgt_password`` to ``None``.
 
-       In any cases, the values provided at command line will prevail.
+       - In any cases, the values provided at command line will
+	 prevail.
 
 Examples
 ========
@@ -142,15 +143,13 @@ Examples
 
 		  $ ./fgttool.py create firewall/addrgrp/GRP_001/member --data '{"name": "HOST_005"}'
 
-     .. note::
+  **Notes**
 
-	- Object ``HOST_001`` has to exist.
-	- Existing members will be preserved, object ``HOST_005`` is
-	  just added to the current members list.
-	- The argument of the ``--data`` command line argument must be
-	  JSON formatted.
-
-	  
+   - Object ``HOST_001`` has to exist.
+   - Existing members will be preserved, object ``HOST_005`` is just
+     added to the current members list. 
+   - The argument of the ``--data`` command line argument must be JSON
+     formatted. 
 	  
 - To delete an existing member from a firewall address group
 
@@ -167,10 +166,10 @@ Examples
 
 		  $ ./fgttool.py get firewall.service/custom
 
-     .. note::
+  **Note**
 
-	Note the usage of the ``.`` when the table we want to reach
-	(here ``custom``) is deeper than two levels.
+    - Note the usage of the ``.`` when the table we want to reach
+      *here ``custom``) is deeper than two levels.
 
 - To update an existing firewall service
 
