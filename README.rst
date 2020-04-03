@@ -81,10 +81,10 @@ What's New
        You can still open the ``fgttool.py`` file and edit the
        variables ``fgt_ip``, ``fgt_login``, ``fgt_password``.
 
-       In any cases, the values provided at command line will prevail.
-
        If you want to be prompted to enter a password, set variable
        ``fgt_password`` to ``None``.
+
+       In any cases, the values provided at command line will prevail.
 
 Examples
 ========
