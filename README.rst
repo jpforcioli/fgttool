@@ -177,7 +177,7 @@ Examples
 
   .. code-block:: shell
 
-		  $ ./fgttool.py edit firewall.service/custom/tcp_11112 --data '{"tcp-portrante": 8888, "comment": "something"}'
+		  $ ./fgttool.py edit firewall.service/custom/tcp_11112 --data '{"tcp-portrange": 8888, "comment": "something"}'
 
 - To rename an existing firewall service
 
