@@ -169,7 +169,7 @@ Examples
   **Note**
 
     - Note the usage of the ``.`` when the table we want to reach
-      *here ``custom``) is deeper than two levels.
+      (here ``custom``) is deeper than two levels.
 
 - To update an existing firewall service
 
