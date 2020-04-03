@@ -76,7 +76,7 @@ What's New
     to enter the FortiGate IP address, the administrator's credentials
     respectively
 
-    .. Note::
+    .. note::
 
        You can still open the ``fgttool.py`` file and edit the
        variables ``fgt_ip``, ``fgt_login``, ``fgt_password``.
