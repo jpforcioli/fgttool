@@ -124,7 +124,7 @@ Examples
 
 		  $ ./fgttool.py get firewall/addrgrp/GRP_001
 
-- To get members of firewall address group
+- To get members of a firewall address group
 
   To get the members of the firewall address group ``GRP_001``:
 
