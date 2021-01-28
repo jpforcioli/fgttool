@@ -43,29 +43,30 @@ This version supports some basic commands as following:
 
 .. code-block:: shell
 
-		python fgttool.py --help
-		usage: fgttool.py [-h] [--ip IP] [--login LOGIN] [--password PASSWORD] [-v] [-d] [--version] {get,delete,create,edit,copy} ...
+   python fgttool.py
+	 usage: fgttool.py [-h] [--ip [IP]] [--port [PORT]] [--login [LOGIN]] [--password [PASSWORD]] [-v] [-d] [--version] {get,delete,create,edit,copy} ...
 
-		Python tool to interact with FGT via rest api
+   Python tool to interact with FGT via rest api
 
-		optional arguments:
-		  -h, --help            show this help message and exit
-		  --ip IP, -i IP        fortigate IP
-		  --login LOGIN, -l LOGIN
-                                        fortigate login
-		  --password PASSWORD, -p PASSWORD
-                                        fortigate password
-		  -v, --verbose         increase output verbosity
-		  -d, --dryrun          dryrun the command without committing any changes
-		  --version             show version number and exit
+   optional arguments:
+     -h, --help            show this help message and exit
+     --ip [IP], -i [IP]    FortiGate IP
+     --port [PORT]         FortiGate port
+     --login [LOGIN], -l [LOGIN]
+                           FortiGate login
+     --password [PASSWORD], -p [PASSWORD]
+                           FortiGate password
+     -v, --verbose         increase output verbosity
+     -d, --dryrun          dryrun the command without committing any changes
+     --version             show version number and exit
 
-		commands:
-		  {get,delete,create,edit,copy}
-		    get                 get object or table
-		    delete              delete object or table
-		    create              create object
-		    edit                edit object
-		    copy                copy object or table from one vdom to another including referenced objects
+   commands:
+     {get,delete,create,edit,copy}
+       get                 get object or table
+       delete              delete object or table
+       create              create object
+       edit                edit object
+       copy                copy object or table from one vdom to another including referenced objects
 
 What's New
 ==========
