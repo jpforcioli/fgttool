@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+# coding: utf-8
 
 import requests
 import argparse
@@ -8,15 +8,18 @@ import getpass
 from pprint import pprint
 
 import logging
+
 logging.captureWarnings(True)
 
-__version__ = "0.3.2"
+__version__ = "0.3.3"
+
 
 class FGT(object):
     """
     Base class to send GET/POST/PUT/DELETE request to FGT
       . All requests are from the same session initiated by each login
     """
+
     def __init__(self):
         pass
 
@@ -27,23 +30,22 @@ class FGT(object):
                 csrftoken = cookie.value[1:-1]  # token stored as a list
                 self.session.headers.update({"X-CSRFTOKEN": csrftoken})
 
-    def login(self, ip, login, password, csrf=True):
+    def login(self, ip, login, password, csrf=True, port=443):
         # close existing session if any
         self.logout()
 
         self.ip = ip
         self.login = login
 
-        self.url_prefix = "https://" + self.ip
+        self.url_prefix = "https://" + self.ip + ":" + str(port)
 
         # start fresh new session
         self.session = requests.session()
         url = self.url_prefix + "/logincheck"
         try:
             res = self.session.post(
-                url,
-                data="username=" + login + "&secretkey=" + password,
-                verify=False)
+                url, data="username=" + login + "&secretkey=" + password, verify=False
+            )
         except requests.exceptions.RequestException as e:
             print(e)
             print("LOGIN failed")
@@ -57,7 +59,7 @@ class FGT(object):
         if res.text.find("license") != -1:
             # found some licensing issue in the response, consider login failed
             print("LOGIN failed: FortiGate-VM license has probably expired")
-            return False        
+            return False
 
         # update session's csrftoken
         if csrf:
@@ -73,9 +75,7 @@ class FGT(object):
     def get(self, url, **options):
         url = self.url_prefix + url
         try:
-            res = self.session.get(
-                url,
-                params=options.get("params"))
+            res = self.session.get(url, params=options.get("params"))
         except requests.exceptions.RequestException as e:
             print(e)
             exit()
@@ -93,7 +93,8 @@ class FGT(object):
                 url,
                 params=options.get("params"),
                 data=json.dumps(data),
-                files=options.get("files"))
+                files=options.get("files"),
+            )
         except requests.exceptions.RequestException as e:
             print(e)
             exit()
@@ -111,7 +112,8 @@ class FGT(object):
                 url,
                 params=options.get("params"),
                 data=json.dumps(data),
-                files=options.get("files"))
+                files=options.get("files"),
+            )
         except requests.exceptions.RequestException as e:
             print(e)
             exit()
@@ -120,9 +122,7 @@ class FGT(object):
     def delete(self, url, **options):
         url = self.url_prefix + url
         try:
-            res = self.session.delete(
-                url,
-                params=options.get("params"))
+            res = self.session.delete(url, params=options.get("params"))
         except requests.exceptions.RequestException as e:
             print(e)
             exit()
@@ -130,109 +130,108 @@ class FGT(object):
 
     # function to retrieve the mkey name
     def get_mkey_name(self, resource, vdom):
-        url_string = '/api/v2/cmdb/{}'.format(resource)
-        res = self.get(url=url_string,
-                       params={'vdom': vdom,
-                               'action': 'schema'})
+        url_string = "/api/v2/cmdb/{}".format(resource)
+        res = self.get(url=url_string, params={"vdom": vdom, "action": "schema"})
         rjson = get_json(res)
-        
-        return(rjson.get('results').get('mkey'))
+
+        return rjson.get("results").get("mkey")
 
     def resource_exists(self, resource, vdom):
-        url_string = '/api/v2/cmdb/{}'.format(resource)
-        res = self.get(url=url_string,
-                       params={'vdom': vdom})
+        url_string = "/api/v2/cmdb/{}".format(resource)
+        res = self.get(url=url_string, params={"vdom": vdom})
         rjson = get_json(res)
 
-        if rjson.get('results'):
+        if rjson.get("results"):
             return True
 
         return False
-                       
+
     # function to retrieve resource
     def get_command(self, args):
         resource = normalize_resource(args.resource)
-        print('Get [{}] (vdom: {})'.format(resource, args.vdom))
+        print("Get [{}] (vdom: {})".format(resource, args.vdom))
 
         # only send request if not dryrun
         if not args.dryrun:
             # retrieve resource
-            url_string = '/api/v2/cmdb/{}'.format(resource)
-            res = self.get(url=url_string,
-                          params={'vdom': args.vdom})
+            url_string = "/api/v2/cmdb/{}".format(resource)
+            res = self.get(url=url_string, params={"vdom": args.vdom})
             check_response(res, True)  # always print JSON response for get
 
     # function to delete resource
     def delete_command(self, args):
         resource = normalize_resource(args.resource)
-        print('Delete [{}] (vdom: {})'.format(resource, args.vdom))        
+        print("Delete [{}] (vdom: {})".format(resource, args.vdom))
 
         # only send request if not dryrun
         if not args.dryrun:
             # delete resource
-            url_string = '/api/v2/cmdb/{}'.format(resource)
-            res = self.delete(url=url_string,
-                             params={'vdom': args.vdom})
+            url_string = "/api/v2/cmdb/{}".format(resource)
+            res = self.delete(url=url_string, params={"vdom": args.vdom})
             check_response(res, args.verbose)
 
     # function to create resource
     def create_command(self, args):
         resource = normalize_resource(args.resource)
-        print('Add [{}] in [{}] (vdom: {})'.format(args.data,
-                                                     resource,
-                                                     args.vdom))
-        
+        print("Add [{}] in [{}] (vdom: {})".format(args.data, resource, args.vdom))
+
         # only send request if not dryrun
         if not args.dryrun:
             # create resource
-            url = '/api/v2/cmdb/{}'.format(resource)
-            res = self.post(url=url,
-                           params={'vdom': args.vdom},
-                           data=args.data)
+            url = "/api/v2/cmdb/{}".format(resource)
+            res = self.post(url=url, params={"vdom": args.vdom}, data=args.data)
             check_response(res, args.verbose)
 
     # function to edit resource
     def edit_command(self, args):
         resource = normalize_resource(args.resource)
-        print('Update [{}] with [{}] (vdom: {})'.format(resource,
-                                                        args.data,
-                                                        args.vdom))       
+        print("Update [{}] with [{}] (vdom: {})".format(resource, args.data, args.vdom))
         # only send request if not dryrun
         if not args.dryrun:
             # edit resource
-            res = self.put(url='/api/v2/cmdb/{}'.format(resource),
-                           params={'vdom': args.vdom},
-                           data=args.data)
+            res = self.put(
+                url="/api/v2/cmdb/{}".format(resource),
+                params={"vdom": args.vdom},
+                data=args.data,
+            )
             check_response(res, args.verbose)
 
     # function to copy resource (recursive)
-    def copy_command(self, args, space=''):
+    def copy_command(self, args, space=""):
         # Very ugly...
         # Should be reworked completely
         table = False
-        padding = ''
+        padding = ""
         resource = normalize_resource(args.resource)
 
-        if (len(resource.split('/')) == 2):
-            print('Copy table [{}] from vdom[{}] to vdom[{}]'.format(resource,
-                                                                     args.oldvdom,
-                                                                     args.newvdom))
+        if len(resource.split("/")) == 2:
+            print(
+                "Copy table [{}] from vdom[{}] to vdom[{}]".format(
+                    resource, args.oldvdom, args.newvdom
+                )
+            )
             table = True
 
         # retrieve resource in old vdom
         res = self.get(
-            url='/api/v2/cmdb/{}'.format(resource),
-            params={'vdom': args.oldvdom,
-                    'skip': 1,  # skip inapplicable fields
-                    'datasource': 1})  # need datasource for deep copy
+            url="/api/v2/cmdb/{}".format(resource),
+            params={
+                "vdom": args.oldvdom,
+                "skip": 1,  # skip inapplicable fields
+                "datasource": 1,
+            },
+        )  # need datasource for deep copy
         rjson = get_json(res)
-        if args.verbose: pprint(rjson)
+        if args.verbose:
+            pprint(rjson)
 
         # skip if cannot get json result
-        if not rjson or 'results' not in rjson:
-            print('{}Error: fail to retrieve resource {} in vdom[{}]'.format(space,
-                                                                             args.resource,
-                                                                             args.oldvdom))
+        if not rjson or "results" not in rjson:
+            print(
+                "{}Error: fail to retrieve resource {} in vdom[{}]".format(
+                    space, args.resource, args.oldvdom
+                )
+            )
             return
 
         # retrieve the master key for resource in oldvdom
@@ -247,99 +246,160 @@ class FGT(object):
                     # copy all referenced objects
                     for item in value:
                         # only copy object that has valid datasource
-                        if 'datasource' in item:
-                            child_path = item['datasource'].replace('.', '/')
+                        if "datasource" in item:
+                            child_path = item["datasource"].replace(".", "/")
                             # handle special case like firewall.service/custom
-                            if len(child_path.split('/')) > 2:
-                                child_path = child_path.replace('/', '.', 1)
-                            child_mkey_name = self.get_mkey_name(child_path,
-                                                                 args.oldvdom)
-                            child_resource = child_path + '/' + item[child_mkey_name]
+                            if len(child_path.split("/")) > 2:
+                                child_path = child_path.replace("/", ".", 1)
+                            child_mkey_name = self.get_mkey_name(
+                                child_path, args.oldvdom
+                            )
+                            child_resource = child_path + "/" + item[child_mkey_name]
                             args.resource = child_resource
-                            new_space = space + '  '
+                            new_space = space + "  "
                             self.copy_command(args, space=new_space)
 
             if table:
                 mkey = data[mkey_name]
-                new_resource = '{}/{}'.format(resource, mkey)
-                padding = space + '  '
+                new_resource = "{}/{}".format(resource, mkey)
+                padding = space + "  "
             else:
                 new_resource = resource
 
             # test if object exist in destination vdom
             if self.resource_exists(new_resource, args.newvdom):
-                print('{}Skipped: resource [{}] already exists in vdom[{}]'.format(padding,
-                                                                                   new_resource,
-                                                                                   args.newvdom))
+                print(
+                    "{}Skipped: resource [{}] already exists in vdom[{}]".format(
+                        padding, new_resource, args.newvdom
+                    )
+                )
                 continue
 
             # only send request if not dryrun
             if not args.dryrun:
                 # Remove mkey from the resource
-                print('{}Copy [{}] from vdom[{}] to vdom[{}]'.format(padding,
-                                                                     new_resource,
-                                                                     args.oldvdom,
-                                                                     args.newvdom))                
-                new_resource = '/'.join(new_resource.split('/')[0:-1])
+                print(
+                    "{}Copy [{}] from vdom[{}] to vdom[{}]".format(
+                        padding, new_resource, args.oldvdom, args.newvdom
+                    )
+                )
+                new_resource = "/".join(new_resource.split("/")[0:-1])
                 # create resource in another vdom
-                res = self.post(url='/api/v2/cmdb/{}'.format(new_resource),
-                               params={'vdom': args.newvdom},
-                               data=(data))
+                res = self.post(
+                    url="/api/v2/cmdb/{}".format(new_resource),
+                    params={"vdom": args.newvdom},
+                    data=(data),
+                )
                 check_response(res, args.verbose)
 
+
 # function to process command arguments
-def process_commands(ip, login, password):
+def process_commands(ip, port, login, password):
 
     # Declare the FortiGate instance
     fgt = FGT()
 
     # inititate command parsers
-    tool = argparse.ArgumentParser(description="Python tool to interact with FGT via rest api")
-    commands = tool.add_subparsers(title="commands", dest='COMMANDS')
+    tool = argparse.ArgumentParser(
+        description="Python tool to interact with FGT via rest api"
+    )
+    commands = tool.add_subparsers(title="commands", dest="COMMANDS")
 
     # common arguments
-    tool.add_argument("--ip", "-i", help="fortigate IP")
-    tool.add_argument("--login", "-l", help="fortigate login")
-    tool.add_argument("--password", "-p",
-                      help="fortigate password")
-    tool.add_argument("-v", "--verbose", help="increase output verbosity",
-                      action="store_true")
-    tool.add_argument("-d", "--dryrun", help="dryrun the command without committing any changes",
-                      action="store_true")
-    tool.add_argument('--version',
-                      help="show version number and exit",
-                      action='version',
-                      version='%(prog)s {}'.format(__version__))
+    tool.add_argument("--ip", "-i", nargs="?", default=ip, help="FortiGate IP")
+    tool.add_argument("--port", nargs="?", default=port, help="FortiGate port")
+    tool.add_argument("--login", "-l", nargs="?", default=login, help="FortiGate login")
+    tool.add_argument(
+        "--password",
+        "-p",
+        nargs="?",
+        const=None,
+        default=password,
+        help="FortiGate password",
+    )
+    tool.add_argument(
+        "-v", "--verbose", help="increase output verbosity", action="store_true"
+    )
+    tool.add_argument(
+        "-d",
+        "--dryrun",
+        help="dryrun the command without committing any changes",
+        action="store_true",
+    )
+    tool.add_argument(
+        "--version",
+        help="show version number and exit",
+        action="version",
+        version="%(prog)s {}".format(__version__),
+    )
 
     # get command (get firewall.address.test --vdom root)
     command_get = commands.add_parser("get", help="get object or table")
-    command_get.add_argument("resource", help="full path to the object or table, ie. firewall/address or firewall/address/test or firewall.service/custom/test")
-    command_get.add_argument("-V", "--vdom", default="root", help="vdom of the resource, default is root")
+    command_get.add_argument(
+        "resource",
+        help="full path to the object or table, ie. firewall/address or firewall/address/test or firewall.service/custom/test",
+    )
+    command_get.add_argument(
+        "-V", "--vdom", default="root", help="vdom of the resource, default is root"
+    )
     command_get.set_defaults(func=fgt.get_command)
 
     # delete command (delete firewall.address.test --vdom root)
     command_delete = commands.add_parser("delete", help="delete object or table")
-    command_delete.add_argument("resource", help="full path to the object or table, ie. firewall/address or firewall/address/test or firewall.service/custom/test")
-    command_delete.add_argument("-V", "--vdom", default="root", help="vdom of the resource, default is root")
+    command_delete.add_argument(
+        "resource",
+        help="full path to the object or table, ie. firewall/address or firewall/address/test or firewall.service/custom/test",
+    )
+    command_delete.add_argument(
+        "-V", "--vdom", default="root", help="vdom of the resource, default is root"
+    )
     command_delete.set_defaults(func=fgt.delete_command)
 
     # create command (create firewall.address.test {"comment":"test"} --vdom root)
     command_create = commands.add_parser("create", help="create object")
-    command_create.add_argument("resource", help="full path to the object or table, ie. firewall/address or firewall/address/test or firewall.service/custom/test")
-    command_create.add_argument("-D", "--data", type=json.loads, default=None, help="object data in JSON format '{\"comment\":\"test\"}'")
-    command_create.add_argument("-V", "--vdom", default="root", help="vdom of the resource, default is root")
+    command_create.add_argument(
+        "resource",
+        help="full path to the object or table, ie. firewall/address or firewall/address/test or firewall.service/custom/test",
+    )
+    command_create.add_argument(
+        "-D",
+        "--data",
+        type=json.loads,
+        default=None,
+        help='object data in JSON format \'{"comment":"test"}\'',
+    )
+    command_create.add_argument(
+        "-V", "--vdom", default="root", help="vdom of the resource, default is root"
+    )
     command_create.set_defaults(func=fgt.create_command)
 
     # edit command (create firewall.address.test {"comment":"test"} --vdom root)
     command_edit = commands.add_parser("edit", help="edit object")
-    command_edit.add_argument("resource", help="full path to the object or table, ie. firewall/address or firewall/address/test or firewall.service/custom/test")
-    command_edit.add_argument("-D", "--data", type=json.loads, default=None, help="object data in string format '{\"comment\":\"test\"}'")
-    command_edit.add_argument("-V", "--vdom", default="root", help="vdom of the resource, default is root")
+    command_edit.add_argument(
+        "resource",
+        help="full path to the object or table, ie. firewall/address or firewall/address/test or firewall.service/custom/test",
+    )
+    command_edit.add_argument(
+        "-D",
+        "--data",
+        type=json.loads,
+        default=None,
+        help='object data in string format \'{"comment":"test"}\'',
+    )
+    command_edit.add_argument(
+        "-V", "--vdom", default="root", help="vdom of the resource, default is root"
+    )
     command_edit.set_defaults(func=fgt.edit_command)
 
     # copy command
-    command_copy = commands.add_parser("copy", help="copy object or table from one vdom to another including referenced objects")
-    command_copy.add_argument("resource", help="full path to the object or table, ie. firewall/address or firewall/address/test or firewall.service/custom/test")
+    command_copy = commands.add_parser(
+        "copy",
+        help="copy object or table from one vdom to another including referenced objects",
+    )
+    command_copy.add_argument(
+        "resource",
+        help="full path to the object or table, ie. firewall/address or firewall/address/test or firewall.service/custom/test",
+    )
     command_copy.add_argument("oldvdom", help="vdom of the original resource, ie. root")
     command_copy.add_argument("newvdom", help="vdom of the new resource, ie. vdom1")
     command_copy.set_defaults(func=fgt.copy_command)
@@ -354,22 +414,24 @@ def process_commands(ip, login, password):
         ip = args.ip
     if args.login:
         login = args.login
-    if args.password == '':
-        password = ''        
+    if args.port:
+        port = args.port
 
-    if password == None:
+    if args.password or args.password == "":
+        password = args.password
+    else:
         password = getpass.getpass()
 
-
-    if fgt.login(ip, login, password):
-        if hasattr(args, 'func'):
+    if fgt.login(ip, login, password, port=port):
+        if hasattr(args, "func"):
             args.func(args)
 
         fgt.logout()
 
+
 # function to parse resource path, name and mkey
 def parse_resource(resource):
-    obj_list = resource.split('/')
+    obj_list = resource.split("/")
     mkey = None
     member = None
     child = None
@@ -396,6 +458,7 @@ def parse_resource(resource):
         exit()
     return (path, name, mkey, member, child)
 
+
 # function to retrieve json data from HTTP response (return False if fails)
 def get_json(response):
     try:
@@ -410,22 +473,26 @@ def get_json(response):
     else:
         return rjson
 
+
 # Function to normalize the resource
 def normalize_resource(resource):
     # for the moment, we just strip {trail,lead}ing '/'.
-    return resource.strip('/')
+    return resource.strip("/")
+
 
 # function to check response
 def check_response(res, verbose):
     print(res)
     rjson = get_json(res)
-    if verbose: pprint(rjson)
+    if verbose:
+        pprint(rjson)
     if not rjson:
         print("fail to retrieve JSON response")
     else:
         status = rjson["http_status"]
         if status == 200:
-            if verbose: print("200 successful request")
+            if verbose:
+                print("200 successful request")
         elif status == 400:
             print("400 Invalid request format")
         elif status == 403:
@@ -441,11 +508,22 @@ def check_response(res, verbose):
         else:
             print(status, "Unknown error")
 
+
 ###############################################################################
 if __name__ == "__main__":
-    # initilize fgt connection
-    fgt_ip = "192.168.194.76"
-    fgt_login = "admin"
-    fgt_password = "" # Set to None if you want to get asked to enter a password
+    # You can use command line arguments to override following variables.
 
-    process_commands(fgt_ip, fgt_login, fgt_password)
+    # FortiGate IP
+    fgt_ip = "10.210.35.101"
+
+    # FortiGate port
+    fgt_port = "443"
+
+    # FortiGate login
+    fgt_login = "admin"
+
+    # FortiGate password.
+    # Use None if you want to get prompted
+    fgt_password = "fortinet"
+
+    process_commands(fgt_ip, fgt_port, fgt_login, fgt_password)

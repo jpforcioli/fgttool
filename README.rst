@@ -23,7 +23,7 @@ Installation
 ============
 
 1. Download ``fgttool.py``
-2. Make sure python module requests is installed
+2. Make sure python module *requests* is installed
 
    .. code-block:: shell
 
@@ -43,7 +43,7 @@ This version supports some basic commands as following:
 
 .. code-block:: shell
 
-		./fgttool.py --help
+		python fgttool.py --help
 		usage: fgttool.py [-h] [--ip IP] [--login LOGIN] [--password PASSWORD] [-v] [-d] [--version] {get,delete,create,edit,copy} ...
 
 		Python tool to interact with FGT via rest api
@@ -70,6 +70,14 @@ This version supports some basic commands as following:
 What's New
 ==========
 
+- 0.3.3
+
+  - Thanks to Matthew James (mattjames@fortinet.com), reworked command line
+    arguments logic for handling the password.
+
+  - added ``--port`` to pass the FortiGate TLS/SSL port. Can be overriden by
+    setting variable ``fgt_port`` in file ``fgttool.py``.
+  
 - 0.3.2
 
   - New command line options: ``--ip``, ``--login`` and ``--password``
@@ -78,14 +86,13 @@ What's New
 
     **Notes**
 
-       - You can still open the ``fgttool.py`` file and edit the
-	 variables ``fgt_ip``, ``fgt_login``, ``fgt_password``. 
+       - You can still open the ``fgttool.py`` file and edit the variables
+         ``fgt_ip``, ``fgt_login``, ``fgt_password``.  
 
        - If you want to be prompted to enter a password, set variable
-	 ``fgt_password`` to ``None``.
+         ``fgt_password`` to ``None``. 
 
-       - In any cases, the values provided at command line will
-	 prevail.
+       - In any cases, the values provided at command line will prevail.
 
 Examples
 ========
@@ -94,7 +101,7 @@ Examples
 
   .. code-block:: shell
 
-		  $ ./fgttool.py get firewall/address --vdom root
+		  $ python fgttool.py get firewall/address --vdom root
 		  
   By default ``fgttool.py`` will consider VDOM ``root``; so you can
   omit the ``--vdom root`` arguments. 
@@ -103,7 +110,7 @@ Examples
 
   .. code-block:: shell
 
-		  $ ./fgttool.py get firewall/address
+		  $ python fgttool.py get firewall/address
 
 - To get a specific firewall address
 
@@ -111,19 +118,19 @@ Examples
 
   .. code-block:: shell
 
-		  $ ./fgttool.py get firewall/address/all
+		  $ python fgttool.py get firewall/address/all
 
 - To get the list of VDOMs
 
   .. code-block:: shell
 
-		  $ ./fgttool.py get system/vdom
+		  $ python fgttool.py get system/vdom
 
 - To get a specific firewall address group
 
   .. code-block:: shell
 
-		  $ ./fgttool.py get firewall/addrgrp/GRP_001
+		  $ python fgttool.py get firewall/addrgrp/GRP_001
 
 - To get members of a firewall address group
 
@@ -131,8 +138,7 @@ Examples
 
   .. code-block:: shell
 
-		  $ ./fgttool.py get firewall/addrgrp/GRP_001/member
-
+		  $ python fgttool.py get firewall/addrgrp/GRP_001/member
 
 - To add a new member in a firewall address group
 
@@ -141,35 +147,37 @@ Examples
 
   .. code-block:: shell
 
-		  $ ./fgttool.py create firewall/addrgrp/GRP_001/member --data '{"name": "HOST_005"}'
+		  $ python fgttool.py create firewall/addrgrp/GRP_001/member --data '{"name": "HOST_005"}'
 
-  **Notes**
+  .. notes::
 
-   - Object ``HOST_001`` has to exist.
-   - Existing members will be preserved, object ``HOST_005`` is just
-     added to the current members list. 
-   - The argument of the ``--data`` command line argument must be JSON
-     formatted. 
+     - Object ``HOST_001`` has to exist.
+
+     - Existing members will be preserved, object ``HOST_005`` is just added to
+       the current members list.  
+   
+     - The argument of the ``--data`` command line argument must be JSON
+       formatted.  
 	  
 - To delete an existing member from a firewall address group
 
   To delete firewall address ``HOST_005`` from firewall address group
-  ``GRP_001``:
+  ``GRP_001``: 
 
   .. code-block:: shell
 
-		  $ ./fgttool.py delete firewall/addrgrp/GRP_001/member/HOST_005
+		  $ python fgttool.py delete firewall/addrgrp/GRP_001/member/HOST_005
 
 - To get list of firewall services
 
   .. code-block:: shell
 
-		  $ ./fgttool.py get firewall.service/custom
+		  $ python fgttool.py get firewall.service/custom
 
-  **Note**
+  .. notes::
 
-    - Note the usage of the ``.`` when the table we want to reach
-      (here ``custom``) is deeper than two levels.
+     - Note the usage of the ``.`` when the table we want to reach (here
+       ``custom``) is deeper than two levels. 
 
 - To update an existing firewall service
 
@@ -177,13 +185,13 @@ Examples
 
   .. code-block:: shell
 
-		  $ ./fgttool.py edit firewall.service/custom/tcp_11112 --data '{"tcp-portrange": 8888, "comment": "something"}'
+		  $ python fgttool.py edit firewall.service/custom/tcp_11112 --data '{"tcp-portrange": 8888, "comment": "something"}'
 
 - To rename an existing firewall service
 
   .. code-block:: shell
 
-		  $ ./fgttool.py edit firewall.service/custom/tcp_11112 --data '{"name": "tcp_8888"}'
+		  $ python fgttool.py edit firewall.service/custom/tcp_11112 --data '{"name": "tcp_8888"}'
 		  
 - To copy an object/table between vdoms
 
@@ -193,10 +201,10 @@ Examples
 
   .. code-block:: shell
 
-		  $ ./fgttool.py copy firewall/addrgrp/GRP_001 vdom1 vdom2
+		  $ python fgttool.py copy firewall/addrgrp/GRP_001 vdom1 vdom2
 
 - To copy all firewall vips from vdom1 to vdom2
 
   .. code-block:: shell
 
-		  $ ./fgttool.py copy firewall/vip vdom1 vdom2  
+		  $ python fgttool.py copy firewall/vip vdom1 vdom2  
