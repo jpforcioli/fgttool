@@ -75,7 +75,7 @@ What's New
   - Thanks to Matthew James (mattjames@fortinet.com), reworked command line
     arguments logic for handling the password.
 
-  - added ``--port`` to pass the FortiGate TLS/SSL port. Can be overriden by
+  - added ``--port`` to pass the FortiGate TLS/SSL port. Can be overridden by
     setting variable ``fgt_port`` in file ``fgttool.py``.
   
 - 0.3.2
@@ -84,7 +84,7 @@ What's New
     to enter the FortiGate IP address, the administrator's credentials
     respectively
 
-    **Notes**
+    .. notes::
 
        - You can still open the ``fgttool.py`` file and edit the variables
          ``fgt_ip``, ``fgt_login``, ``fgt_password``.  
